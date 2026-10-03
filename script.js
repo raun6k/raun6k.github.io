@@ -3,13 +3,45 @@ const page = document.querySelector('.page');
 const sectionLinks = document.querySelectorAll('.topbar nav a[href^="#"]');
 let restoreTimer;
 let unfoldTimer;
-let alignTimer;
+let alignmentFrame;
 let restorationPending = false;
 
-function clearSpotlight() {
+function followSection(section, expanding = false) {
+  cancelAnimationFrame(alignmentFrame);
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const duration = reducedMotion ? 0 : 1300;
+  const startScroll = window.scrollY;
+  const started = performance.now();
+  const frame = now => {
+    const progress = duration ? Math.min(1, (now - started) / duration) : 1;
+    const bounds = section.getBoundingClientRect();
+    let spaceAbove = 0;
+    let spaceRemaining = 0;
+    if (!expanding && page.classList.contains('has-spotlight')) {
+      page.querySelectorAll('main section:not(.spotlight) .entries').forEach(entries => {
+        const size = entries.getBoundingClientRect();
+        const space = size.height + parseFloat(getComputedStyle(entries).marginTop);
+        spaceRemaining += space;
+        if (size.top < bounds.top) spaceAbove += space;
+      });
+    }
+    const target = Math.max(0, Math.min(
+      window.scrollY + bounds.top + bounds.height / 2 - window.innerHeight / 2 - spaceAbove,
+      document.documentElement.scrollHeight - window.innerHeight - spaceRemaining
+    ));
+    // Follow re-expansion directly; ease the initial trip to the section.
+    const amount = expanding ? 1 : progress * progress * (3 - 2 * progress);
+    window.scrollTo({ top: startScroll + (target - startScroll) * amount, behavior: 'instant' });
+    if (progress < 1) alignmentFrame = requestAnimationFrame(frame);
+  };
+  alignmentFrame = requestAnimationFrame(frame);
+}
+
+function clearSpotlight(expanding = false) {
+  const selected = page.querySelector('.spotlight');
   clearTimeout(restoreTimer);
   clearTimeout(unfoldTimer);
-  clearTimeout(alignTimer);
+  cancelAnimationFrame(alignmentFrame);
   restorationPending = false;
   page.classList.remove('restoring-brightness');
   page.classList.remove('has-spotlight');
@@ -17,6 +49,7 @@ function clearSpotlight() {
   page.querySelectorAll('.spotlight').forEach(section => {
     section.classList.remove('spotlight');
   });
+  if (expanding && selected) followSection(selected, true);
 }
 
 function restoreAfterMovement() {
@@ -25,7 +58,7 @@ function restoreAfterMovement() {
   restoreTimer = setTimeout(() => {
     page.classList.add('restoring-brightness');
     const fadeTime = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 500;
-    unfoldTimer = setTimeout(clearSpotlight, fadeTime);
+    unfoldTimer = setTimeout(() => clearSpotlight(true), fadeTime);
   }, 500);
 }
 
@@ -43,17 +76,7 @@ function activateSection(hash) {
   page.classList.add('has-spotlight');
   page.querySelectorAll('main section').forEach(other => { other.querySelector('.entries').inert = other !== section; });
 
-  const align = () => {
-    if (location.hash === hash) {
-      section.scrollIntoView({ block: 'center', behavior: 'instant' });
-    }
-  };
-  requestAnimationFrame(align);
-  // Font loading can change line wrapping after the first layout.
-  document.fonts.ready.then(align);
-  alignTimer = setTimeout(() => {
-    if (section.classList.contains('spotlight') && !restorationPending) align();
-  }, 500);
+  followSection(section);
 }
 
 sectionLinks.forEach(link => {
@@ -72,6 +95,7 @@ window.addEventListener('hashchange', () => {
 });
 
 document.addEventListener('mousemove', restoreAfterMovement, { passive: true });
-document.addEventListener('keydown', clearSpotlight);
-document.addEventListener('touchstart', clearSpotlight, { passive: true });
-document.addEventListener('pointerdown', clearSpotlight, { passive: true });
+document.addEventListener('keydown', () => clearSpotlight());
+document.addEventListener('touchstart', () => clearSpotlight(), { passive: true });
+document.addEventListener('pointerdown', () => clearSpotlight(), { passive: true });
+document.addEventListener('wheel', () => clearSpotlight(), { passive: true });

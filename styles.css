@@ -8,6 +8,7 @@
   --secondary: #888888;
 }
 * { box-sizing: border-box; }
+html { overflow-anchor: none; }
 body {
   margin: 0;
   min-height: 100vh;
@@ -61,13 +62,13 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 1.5rem;
   color: var(--secondary);
   font-size: 0.9375rem;
   line-height: 1.5;
 }
-nav, .social-links { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; }
+nav, .social-links { display: flex; flex-wrap: nowrap; flex-shrink: 0; align-items: center; gap: 1.25rem; }
 .topbar a { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; text-decoration: none; }
 .topbar a::after {
   content: attr(aria-label);
@@ -91,7 +92,7 @@ nav, .social-links { display: flex; flex-wrap: wrap; align-items: center; gap: 1
 .topbar .blog-link,
 .topbar .home-link { width: auto; }
 .topbar .blog-link { font-size: 1.25rem; font-weight: 600; line-height: 1; }
-.topbar .home-link { margin-right: auto; }
+.topbar .home-link { margin-right: auto; flex-shrink: 0; white-space: nowrap; }
 .topbar .blog-link[aria-current="page"] { color: var(--title); }
 .topbar .blog-link::after,
 .topbar .home-link::after { content: none; }
@@ -192,7 +193,10 @@ h3 { color: var(--title); font-size: 1.125rem; font-weight: 500; line-height: 1.
   .page .intro { transition: opacity 500ms ease; }
   .page main section { transition: opacity 500ms ease; }
   .page .entries {
-    transition: grid-template-rows 500ms ease, margin-top 500ms ease;
+    transition: grid-template-rows 1300ms cubic-bezier(0.4, 0, 0.2, 1), margin-top 1300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .page.has-spotlight main section:not(.spotlight) .entries {
+    transition-timing-function: cubic-bezier(0.8, 0, 0.6, 1);
   }
   .page.has-spotlight:not(.restoring-brightness) .intro { transition-duration: 0ms; }
   .page.has-spotlight:not(.restoring-brightness) main section { transition-duration: 0ms; }
@@ -256,9 +260,11 @@ a:focus-visible { outline: 1px solid #739fff; outline-offset: 5px; }
 }
 @media (max-width: 40rem) {
   .portfolio-page { --intro-gap: 2rem; --section-gap: 2.5rem; }
-  .topbar { padding: 1.5rem 1.75rem; justify-content: flex-end; gap: 0.875rem 1rem; }
-  nav { gap: 1rem; font-size: 0.8125rem; }
-  .social-links { gap: 1rem; font-size: 0.8125rem; }
+  .topbar { padding: 1.5rem 0.75rem; justify-content: flex-end; gap: 0.375rem; }
+  .topbar nav,
+  .social-links { gap: 0.25rem; }
+  .topbar .home-link { font-size: 0; }
+  .topbar .home-link::before { content: "RB"; font-size: 1rem; font-weight: 500; }
   .page { padding-top: 2rem; }
   h1 { font-size: 2.25rem; }
   .intro { margin-bottom: 2rem; }
