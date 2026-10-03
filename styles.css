@@ -178,6 +178,9 @@ h3 { color: var(--title); font-size: 1.125rem; font-weight: 500; line-height: 1.
 .secondary { color: var(--secondary); font-size: 0.875rem; line-height: 1.6; }
 .secondary strong { font-weight: inherit; }
 .merge-status { color: var(--title); font-weight: 600; }
+.contribution-title { display: flex; align-items: baseline; gap: 0.5rem; }
+.merged-icon { width: 1rem; height: 1rem; flex-shrink: 0; align-self: flex-start; margin-top: 0.3125rem; fill: #a371f7; }
+.contribution-title .pr-number { flex-shrink: 0; font-size: 0.875rem; font-weight: 400; color: var(--secondary); }
 .portfolio-page .entries { display: grid; grid-template-rows: 1fr; }
 .portfolio-page .entries > .reveal-content { min-height: 0; overflow: hidden; }
 .section-body { min-height: 0; overflow: hidden; }
