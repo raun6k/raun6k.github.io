@@ -1,8 +1,8 @@
 // Section navigation skips the intro, aligns the final layout, and spotlights it.
 // Preserve file previews while using the root homepage URL on the hosted site.
 if (location.protocol === 'https:' || location.protocol === 'http:') {
-  document.querySelectorAll('a[href^="index.html"]').forEach(link => {
-    link.setAttribute('href', link.getAttribute('href').replace(/^index\.html/, './'));
+  document.querySelectorAll('a[href^="index.html"], a[href^="../index.html"]').forEach(link => {
+    link.setAttribute('href', link.getAttribute('href').replace(/^(\.\.\/)?index\.html/, (_, parent) => parent || './'));
   });
   if (location.pathname.endsWith('/index.html')) {
     history.replaceState(null, '', './' + location.search + location.hash);

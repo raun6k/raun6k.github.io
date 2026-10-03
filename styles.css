@@ -133,7 +133,6 @@ nav, .social-links { display: flex; flex-wrap: nowrap; flex-shrink: 0; align-ite
 .social-links a:hover .profile-card,
 .social-links a:focus-visible .profile-card { visibility: visible; }
 .profile-platform { color: var(--secondary); font-size: 0.75rem; }
-.profile-name { color: var(--title); font-size: 1rem; font-weight: 500; }
 .profile-handle { color: var(--text); font-size: 0.875rem; }
 .profile-destination { margin-top: 0.5rem; color: var(--secondary); font-size: 0.6875rem; overflow-wrap: anywhere; }
 @media (max-width: 40rem) {
