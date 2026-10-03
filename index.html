@@ -54,9 +54,10 @@
         <h1>Raunak Bhagate</h1>
         <div class="tagline">
           <div class="reveal-content">
-          <p>I study applied AI and build ML systems that hold up once they're real. Most of that work is about efficiency. A system that is only good when it is large is not finished. I care about what it costs to run, what it can drop, and whether it stays useful once the budget is real.</p>
-          <p>The same standard shows up when a model has to act, not just answer. An agent is only as good as the limits around it: what it can see, what it is allowed to do, and how you tell that it did the right thing. And in geospatial work, the ground truth is often scarce, so a convincing map is not the same as a true one.</p>
-          <p>I am not collecting demos. I want systems you can trust after they leave the notebook.</p>
+            <p>I study applied AI and build ML systems that hold up once they're real. Most of that is inference. Not a new model, and not a bigger one. The work is the serving stack: throughput, latency, and what it costs to run when the hardware budget is fixed. A result that only looks good at unlimited scale is not a result. I care whether the system stays fast and stays reliable once it is actually serving.</p>
+            <p>I also work on agentic systems, as infrastructure rather than a demo. If a model can act, someone has to define what it can see, what it is allowed to do, and how you check that it did the right thing. That is a systems problem, the same family as serving: limits, cost, and proof.</p>
+            <p>Geospatial AI is the other thread. Labels are scarce, a convincing map is not a true one, and the output has to be a decision a person can use, not a model card.</p>
+            <p>Research and engineering are the same job here. The bar is whether it still works after it leaves the notebook.</p>
           </div>
         </div>
 
@@ -70,13 +71,13 @@
             <div class="reveal-content">
             <article class="entry">
               <h3><a href="https://github.com/raun6k/Polymath">Polymath</a></h3>
-              <p>A local multi-source RAG research assistant.</p>
+              <p>A local RAG assistant over papers, notes, and code. It retrieves with embeddings, answers from a local model, and cites the source. The chunker on the hot path is C++.</p>
               <p class="secondary">C++17, Python, FastAPI, ChromaDB, Ollama, MCP</p>
             </article>
 
             <article class="entry">
               <h3><a href="https://github.com/raun6k/TraceLens">TraceLens</a></h3>
-              <p>A distributed-trace bottleneck finder.</p>
+              <p>Reads OpenTelemetry traces from a service chain and names the slow span. An isolation forest flags it, and a injected slow query makes the finding reproducible.</p>
               <p class="secondary">Python, FastAPI, OpenTelemetry, Jaeger, scikit-learn, Docker</p>
             </article>
             </div>
@@ -91,10 +92,25 @@
             <div class="reveal-content">
             <article class="entry">
               <h3>Calibrated Weak Supervision for Post-Harvest Burned-Cropland Mapping under Label Scarcity</h3>
-              <p class="secondary"><strong>First author.</strong> 47th Asian Conference on Remote Sensing (ACRS 2026). <strong>Accepted for oral presentation.</strong></p>
+              <p>Weak supervision for burned-cropland mapping when labels are scarce, from Sentinel-2 and fire detections. First author, oral at ACRS 2026. It held up on unseen districts and in a new state.</p>
             </article>
             </div>
           </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="experience">
+          <div class="section-body">
+            <h2 id="experience">Experience</h2>
+            <div class="entries">
+              <div class="reveal-content">
+                <article class="entry">
+                  <h3>AI Research Intern, Rivedix</h3>
+                  <p class="secondary">Remote, June 2026</p>
+                  <p>Built the evaluation framework for their cybersecurity assessment product: what to test, how to score AI-written findings, and where the model was failing.</p>
+                </article>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -110,7 +126,7 @@
                 <svg class="merged-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/></svg>
                 <a class="pr-number" href="https://github.com/microsoft/agent-governance-toolkit/pull/4202" aria-label="Pull request 4202">#4202</a>
               </h3>
-              <p><strong class="merge-status">Merged.</strong> Improved recursive-delete checks with tokenizer-based shell parsing.</p>
+              <p>Microsoft's agent governance toolkit was matching dangerous deletes with shell regex, which quoting could fool. I switched it to real command parsing. <a href="https://github.com/microsoft/agent-governance-toolkit/pull/4202">Merged</a>.</p>
             </article>
             </div>
           </div>
