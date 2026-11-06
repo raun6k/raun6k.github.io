@@ -1,19 +1,28 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { getCollection } from 'astro:content';
+import { getPosts, formatDate } from '../../lib/posts';
 
-const posts = (await getCollection('posts', p => !p.data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const posts = await getPosts();
 ---
-<Base title="Writing">
-  <h1>Writing</h1>
-  {posts.length === 0 && <p>No posts yet.</p>}
-  <ul>
-    {posts.map(p => (
-      <li>
-        <a href={`/blog/${p.id}/`}>{p.data.title}</a>
-        <small> {p.data.date.toISOString().slice(0, 10)}</small>
-      </li>
-    ))}
-  </ul>
+<Base title="Writing" description="Writing by Raunak Bhagate.">
+  <div class="wrap">
+    <section class="hero">
+      <h1>Writing</h1>
+      {posts.length === 0 && <p class="lede" style="color: var(--muted)">No posts yet.</p>}
+    </section>
+    {posts.length > 0 && (
+      <ul class="postlist" style="margin-top: 1.5rem">
+        {posts.map(p => (
+          <li>
+            <span>
+              <a href={`/blog/${p.id}/`}>{p.data.title}</a>
+              {p.data.draft && <span class="draft-badge">draft</span>}
+              <span class="meta" style="display:block; font-weight:400">{p.data.summary}</span>
+            </span>
+            <time datetime={p.data.date.toISOString()}>{formatDate(p.data.date)}</time>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
 </Base>

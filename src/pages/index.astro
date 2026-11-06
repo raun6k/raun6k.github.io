@@ -1,15 +1,92 @@
 ---
 import Base from '../layouts/Base.astro';
-import { getCollection } from 'astro:content';
+import Publication from '../components/Publication.astro';
+import { site } from '../data/site';
+import { news } from '../data/news';
+import { publications } from '../data/publications';
+import { projects } from '../data/projects';
+import { experience } from '../data/experience';
+import { openSource } from '../data/opensource';
+import { getPosts, formatDate } from '../lib/posts';
 
-const posts = (await getCollection('posts', p => !p.data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const posts = (await getPosts()).slice(0, 5);
+const [lede, ...rest] = site.bio;
 ---
 <Base>
-  <h1>Raunak Bhagate</h1>
-  <p>Walking skeleton placeholder. Real content comes after the pipeline is verified.</p>
-  <h2>Writing</h2>
-  <ul>
-    {posts.map(p => <li><a href={`/blog/${p.id}/`}>{p.data.title}</a></li>)}
-  </ul>
+  <div class="wrap">
+    <section class="hero">
+      <h1>{site.name}</h1>
+      <p class="lede">{lede}</p>
+      {rest.map(p => <p>{p}</p>)}
+      <div class="linkrow">
+        {site.links.map(l => <a href={l.href}>{l.label}</a>)}
+      </div>
+    </section>
+
+    <section class="block" id="news">
+      <h2>News</h2>
+      <ul class="news">
+        {news.map(n => (
+          <li>
+            <span class="when">{n.date}</span>
+            <span>{n.href ? <a href={n.href}>{n.text}</a> : n.text}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="block" id="publications">
+      <h2>Publications</h2>
+      {publications.map(pub => <Publication pub={pub} />)}
+    </section>
+
+    <section class="block" id="projects">
+      <h2>Projects</h2>
+      {projects.map(p => (
+        <article class="entry">
+          <h3><a href={p.href}>{p.name}</a></h3>
+          <p>{p.blurb}</p>
+          <div class="tags">{p.tags.map(t => <span>{t}</span>)}</div>
+        </article>
+      ))}
+    </section>
+
+    <section class="block" id="experience">
+      <h2>Experience</h2>
+      {experience.map(e => (
+        <article class="entry">
+          <h3>{e.role}, {e.org}</h3>
+          <p class="meta">{e.when}</p>
+          <p>{e.blurb}</p>
+        </article>
+      ))}
+    </section>
+
+    <section class="block" id="open-source">
+      <h2>Open source</h2>
+      {openSource.map(o => (
+        <article class="entry">
+          <h3>{o.project}</h3>
+          <p>{o.blurb} <a href={o.href}>{o.status} (#{o.pr})</a>.</p>
+        </article>
+      ))}
+    </section>
+
+    {posts.length > 0 && (
+      <section class="block" id="writing">
+        <h2>Writing</h2>
+        <ul class="postlist">
+          {posts.map(p => (
+            <li>
+              <span>
+                <a href={`/blog/${p.id}/`}>{p.data.title}</a>
+                {p.data.draft && <span class="draft-badge">draft</span>}
+              </span>
+              <time datetime={p.data.date.toISOString()}>{formatDate(p.data.date)}</time>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </div>
 </Base>

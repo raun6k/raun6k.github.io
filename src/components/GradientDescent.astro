@@ -1,0 +1,87 @@
+---
+interface Props { caption?: string }
+const { caption = 'Gradient descent on a double-well loss. Move the sliders, then run.' } = Astro.props;
+---
+<figure class="figure gd">
+  <canvas aria-label="Gradient descent on a one-dimensional loss curve"></canvas>
+  <div class="controls">
+    <label>learning rate <input type="range" class="lr" min="0.01" max="1.2" step="0.01" value="0.15" /> <span class="lrv">0.15</span></label>
+    <label>start x <input type="range" class="x0" min="-2" max="2" step="0.05" value="1.8" /> <span class="x0v">1.80</span></label>
+    <button type="button" class="run">Run</button>
+    <button type="button" class="reset">Reset</button>
+    <span class="readout"></span>
+  </div>
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<script>
+  // f(x) = x^4/4 - x^2/2 + 0.12x, f'(x) = x^3 - x + 0.12
+  const f = (x: number) => x ** 4 / 4 - x ** 2 / 2 + 0.12 * x;
+  const df = (x: number) => x ** 3 - x + 0.12;
+  const XMIN = -2.3, XMAX = 2.3, YMIN = -0.85, YMAX = 1.6;
+
+  document.querySelectorAll<HTMLElement>('.gd').forEach(root => {
+    const canvas = root.querySelector('canvas')!;
+    const ctx = canvas.getContext('2d')!;
+    const lr = root.querySelector<HTMLInputElement>('.lr')!;
+    const x0 = root.querySelector<HTMLInputElement>('.x0')!;
+    const out = root.querySelector<HTMLElement>('.readout')!;
+    let path: number[] = [];
+    let timer = 0;
+
+    const css = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const size = () => {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const r = canvas.getBoundingClientRect();
+      canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { w: r.width, h: r.height };
+    };
+    const draw = () => {
+      const { w, h } = size();
+      const X = (x: number) => ((x - XMIN) / (XMAX - XMIN)) * w;
+      const Y = (y: number) => h - ((y - YMIN) / (YMAX - YMIN)) * h;
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = css('--muted'); ctx.lineWidth = 1.5; ctx.beginPath();
+      for (let i = 0; i <= 200; i++) {
+        const x = XMIN + ((XMAX - XMIN) * i) / 200;
+        i ? ctx.lineTo(X(x), Y(f(x))) : ctx.moveTo(X(x), Y(f(x)));
+      }
+      ctx.stroke();
+      const accent = css('--accent');
+      const pts = path.length ? path : [parseFloat(x0.value)];
+      ctx.strokeStyle = accent; ctx.fillStyle = accent; ctx.globalAlpha = 0.35; ctx.lineWidth = 1;
+      ctx.beginPath();
+      pts.forEach((x, i) => { const px = X(Math.max(XMIN, Math.min(XMAX, x))), py = Y(Math.max(YMIN, Math.min(YMAX, f(x)))); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+      ctx.stroke();
+      pts.forEach(x => { ctx.beginPath(); ctx.arc(X(Math.max(XMIN, Math.min(XMAX, x))), Y(Math.max(YMIN, Math.min(YMAX, f(x)))), 2.5, 0, 7); ctx.fill(); });
+      ctx.globalAlpha = 1;
+      const last = pts[pts.length - 1];
+      ctx.beginPath(); ctx.arc(X(Math.max(XMIN, Math.min(XMAX, last))), Y(Math.max(YMIN, Math.min(YMAX, f(last)))), 5, 0, 7); ctx.fill();
+      out.textContent = path.length
+        ? `step ${path.length - 1}  x=${Number.isFinite(last) ? last.toFixed(3) : 'NaN'}  loss=${Number.isFinite(f(last)) ? f(last).toFixed(3) : 'inf'}`
+        : '';
+    };
+    const reset = () => { clearInterval(timer); path = []; draw(); };
+    const run = () => {
+      clearInterval(timer);
+      path = [parseFloat(x0.value)];
+      const rate = parseFloat(lr.value);
+      timer = window.setInterval(() => {
+        const x = path[path.length - 1];
+        const next = x - rate * df(x);
+        path.push(next);
+        draw();
+        if (path.length > 40 || !Number.isFinite(next) || Math.abs(next) > 50) clearInterval(timer);
+      }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 140);
+    };
+
+    lr.addEventListener('input', () => { root.querySelector('.lrv')!.textContent = parseFloat(lr.value).toFixed(2); reset(); });
+    x0.addEventListener('input', () => { root.querySelector('.x0v')!.textContent = parseFloat(x0.value).toFixed(2); reset(); });
+    root.querySelector('.run')!.addEventListener('click', run);
+    root.querySelector('.reset')!.addEventListener('click', reset);
+    window.addEventListener('resize', draw);
+    document.addEventListener('themechange', draw);
+    draw();
+  });
+</script>

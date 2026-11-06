@@ -1,0 +1,114 @@
+---
+export interface PaletteItem {
+  label: string;
+  hint: string;
+  href?: string;
+  external?: boolean;
+  action?: string;
+  text?: string;
+}
+interface Props { items: PaletteItem[] }
+const { items } = Astro.props;
+const json = JSON.stringify(items).replace(/</g, '\\u003c');
+---
+<dialog id="palette" aria-label="Command palette">
+  <input id="palette-input" type="text" placeholder="Search papers, projects, posts, actions…" autocomplete="off" spellcheck="false" aria-controls="palette-list" />
+  <ul id="palette-list" role="listbox"></ul>
+  <div class="foot"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span></div>
+</dialog>
+<script type="application/json" id="palette-data" set:html={json}></script>
+
+<script>
+  type Item = { label: string; hint: string; href?: string; external?: boolean; action?: string; text?: string };
+  const dlg = document.getElementById('palette') as HTMLDialogElement | null;
+  const input = document.getElementById('palette-input') as HTMLInputElement | null;
+  const list = document.getElementById('palette-list') as HTMLUListElement | null;
+  const raw = document.getElementById('palette-data');
+
+  if (dlg && input && list && raw) {
+    const items: Item[] = JSON.parse(raw.textContent || '[]');
+    let shown: Item[] = [];
+    let active = 0;
+
+    // Subsequence fuzzy score: consecutive and word-start matches rank higher.
+    const score = (q: string, s: string): number => {
+      if (!q) return 1;
+      const hay = s.toLowerCase();
+      let qi = 0, sc = 0, prev = -2;
+      for (let i = 0; i < hay.length && qi < q.length; i++) {
+        if (hay[i] === q[qi]) {
+          sc += i === prev + 1 ? 3 : 1;
+          if (i === 0 || ' -/:·'.includes(hay[i - 1])) sc += 2;
+          prev = i; qi++;
+        }
+      }
+      return qi === q.length ? sc : -1;
+    };
+
+    const render = () => {
+      const q = input.value.trim().toLowerCase();
+      shown = items
+        .map(it => ({ it, s: Math.max(score(q, it.label), score(q, it.hint) - 1) }))
+        .filter(x => x.s >= 0)
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 9)
+        .map(x => x.it);
+      if (active >= shown.length) active = 0;
+      list.innerHTML = '';
+      if (!shown.length) {
+        const li = document.createElement('li');
+        li.className = 'empty'; li.textContent = 'No matches';
+        list.appendChild(li);
+        return;
+      }
+      shown.forEach((it, i) => {
+        const li = document.createElement('li');
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', String(i === active));
+        const name = document.createElement('span'); name.className = 'name'; name.textContent = it.label;
+        const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = it.hint;
+        li.append(name, hint);
+        li.addEventListener('mousemove', () => { if (active !== i) { active = i; paint(); } });
+        li.addEventListener('click', () => run(it));
+        list.appendChild(li);
+      });
+    };
+    const paint = () => {
+      [...list.children].forEach((li, i) => li.setAttribute('aria-selected', String(i === active)));
+      (list.children[active] as HTMLElement | undefined)?.scrollIntoView({ block: 'nearest' });
+    };
+
+    const toast = (msg: string) => document.dispatchEvent(new CustomEvent('toast', { detail: msg }));
+    const run = (it: Item) => {
+      dlg.close();
+      if (it.action === 'theme') document.dispatchEvent(new CustomEvent('toggle-theme'));
+      else if (it.action === 'background') document.dispatchEvent(new CustomEvent('toggle-bg'));
+      else if (it.action === 'copy-link') navigator.clipboard.writeText(location.href).then(() => toast('Link copied'));
+      else if (it.action === 'copy-text' && it.text) navigator.clipboard.writeText(it.text).then(() => toast('BibTeX copied'));
+      else if (it.href) {
+        if (it.external) window.open(it.href, '_blank', 'noopener');
+        else location.href = it.href;
+      }
+    };
+
+    const open = () => {
+      if (dlg.open) return;
+      input.value = ''; active = 0; render();
+      dlg.showModal(); input.focus();
+    };
+
+    document.addEventListener('open-palette', open);
+    document.addEventListener('keydown', e => {
+      const typing = (e.target as Element)?.closest?.('input, textarea, select, [contenteditable]');
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); dlg.open ? dlg.close() : open(); }
+      else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) { e.preventDefault(); open(); }
+    });
+    input.addEventListener('input', () => { active = 0; render(); });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(shown.length - 1, active + 1); paint(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(0, active - 1); paint(); }
+      else if (e.key === 'Enter' && shown[active]) { e.preventDefault(); run(shown[active]); }
+    });
+    dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+  }
+</script>

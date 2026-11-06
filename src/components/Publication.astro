@@ -1,0 +1,27 @@
+---
+import type { Publication } from '../data/publications';
+interface Props { pub: Publication }
+const { pub } = Astro.props;
+const me = 'Raunak Bhagate';
+---
+<article class="entry pub">
+  <h3><a href={pub.links[0]?.href}>{pub.title}</a></h3>
+  <p class="meta">
+    {pub.authors.map((a, i) => (
+      <>{a === me ? <strong>{a}</strong> : a}{i < pub.authors.length - 1 ? ', ' : ''}</>
+    ))}
+  </p>
+  <p class="meta">{pub.venue}</p>
+  <p>{pub.blurb}</p>
+  <div class="links">
+    {pub.links.map(l => <a href={l.href}>{l.label}</a>)}
+  </div>
+  <details>
+    <summary>Abstract and BibTeX</summary>
+    <p class="abstract">{pub.abstract}</p>
+    <div class="bib">
+      <pre>{pub.bibtex}</pre>
+      <button type="button" data-copy={pub.bibtex}>Copy</button>
+    </div>
+  </details>
+</article>

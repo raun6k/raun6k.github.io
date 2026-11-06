@@ -1,0 +1,35 @@
+---
+title: 'Template: math, sidenotes, and interactive figures'
+date: 2026-11-06
+summary: A draft that shows every writing feature. Visible in dev only; delete it or set draft to false when you write a real post.
+draft: true
+---
+
+import GradientDescent from '../../components/GradientDescent.astro';
+
+This page is a template. It is a draft, so it renders locally and never ships. Copy it, rename it, and write.
+
+## Math
+
+Inline math works: the throughput of a server is $\mathrm{tokens}/\mathrm{seconds}$. Display math works too:
+
+$$
+\mathrm{softmax}(z)_i = \frac{e^{z_i}}{\sum_j e^{z_j}}
+$$
+
+## Sidenotes
+
+A sidenote sits in the margin on wide screens<span class="sn"><span class="sn-body">Like this one. On narrow screens it drops inline under the paragraph.</span></span> and inline on phones. Use them for asides that would break the flow of a paragraph.
+
+## Interactive figures
+
+Drag the learning rate up and watch descent turn from smooth convergence to oscillation to divergence. Any Astro component can be dropped into a post this way.
+
+<GradientDescent />
+
+## Code
+
+```python
+def step(x, lr):
+    return x - lr * (x**3 - x + 0.12)
+```

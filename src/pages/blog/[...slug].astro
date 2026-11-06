@@ -1,19 +1,57 @@
 ---
+import 'katex/dist/katex.min.css';
 import Base from '../../layouts/Base.astro';
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
+import { getPosts, readingMinutes, formatDate } from '../../lib/posts';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', p => !p.data.draft);
+  const posts = await getPosts();
   return posts.map(post => ({ params: { slug: post.id }, props: { post } }));
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
+const toc = headings.filter(h => h.depth === 2 || h.depth === 3);
 ---
-<Base title={post.data.title} description={post.data.summary}>
-  <article>
-    <h1>{post.data.title}</h1>
-    <p><small>{post.data.date.toISOString().slice(0, 10)}</small></p>
-    <Content />
+<Base title={post.data.title} description={post.data.summary} type="article">
+  {toc.length > 1 && (
+    <nav class="toc" aria-label="Contents">
+      <h2>Contents</h2>
+      {toc.map(h => <a href={`#${h.slug}`} class={h.depth === 3 ? 'sub' : ''} data-id={h.slug}>{h.text}</a>)}
+    </nav>
+  )}
+  <article class="wrap">
+    <header class="post-head">
+      <h1>{post.data.title}</h1>
+      <p class="meta">
+        <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+        · {readingMinutes(post.body)} min read
+        {post.data.draft && <span class="draft-badge">draft</span>}
+      </p>
+    </header>
+    <div class="prose"><Content /></div>
   </article>
+
+  <script>
+    // Highlight the contents entry for the heading currently in view.
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('.toc a')];
+    const heads = links
+      .map(a => document.getElementById(a.dataset.id || ''))
+      .filter((el): el is HTMLElement => !!el);
+    if (links.length && 'IntersectionObserver' in window) {
+      const visible = new Set<string>();
+      const paint = () => {
+        const firstVisible = heads.find(h => visible.has(h.id));
+        const above = [...heads].reverse().find(h => h.getBoundingClientRect().top < 120);
+        const current = (firstVisible || above || heads[0])?.id;
+        links.forEach(a => a.classList.toggle('active', a.dataset.id === current));
+      };
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(en => (en.isIntersecting ? visible.add(en.target.id) : visible.delete(en.target.id)));
+        paint();
+      }, { rootMargin: '-10% 0px -70% 0px' });
+      heads.forEach(h => io.observe(h));
+      paint();
+    }
+  </script>
 </Base>
