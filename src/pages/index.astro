@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Publication from '../components/Publication.astro';
+import GradientDescent from '../components/GradientDescent.astro';
 import { site } from '../data/site';
 import { news } from '../data/news';
 import { publications } from '../data/publications';
@@ -11,82 +12,216 @@ import { getPosts, formatDate } from '../lib/posts';
 
 const posts = (await getPosts()).slice(0, 5);
 const [lede, ...rest] = site.bio;
+const contacts = site.links.filter(l => !l.label.includes('arXiv'));
+const handles: Record<string, string> = { GitHub: '@raun6k', LinkedIn: 'raunak-bhagate', X: '@raun6k' };
+const paper = publications[0];
+
+const nav = [
+  ['about', 'About'],
+  ['research', 'Research'],
+  ['projects', 'Projects'],
+  ['experience', 'Experience'],
+  ['explorations', 'Explorations'],
+  ['contact', 'Contact'],
+];
+
+// A sentence per project, saying what the world is and why it looks that way.
+const captions: Record<string, string> = {
+  pylon: 'Eight ring lanes, one for each concurrent request in the benchmark. The grain flow is scaled from the 184.9 tokens/s measured at eight.',
+  tracelens: 'Seven beads on one orbit, like spans on a trace. One of them runs late, and that is the one TraceLens names.',
+};
 ---
-<Base>
-  <div class="wrap">
-    <section class="hero">
-      <h1>{site.name}</h1>
-      <p class="lede">{lede}</p>
-      {rest.map(p => <p>{p}</p>)}
-      <div class="linkrow">
-        {site.links.map(l => <a href={l.href}>{l.label}</a>)}
+<Base shell={false}>
+  <Fragment slot="chrome">
+    <canvas id="universe" aria-hidden="true"></canvas>
+    <div class="still" aria-hidden="true"></div>
+    <div id="labels" aria-hidden="true"></div>
+
+    <header class="bar">
+      <a class="brand" href="#top">{site.name}</a>
+      <nav aria-label="Sections">
+        {nav.map(([id, label]) => <a href={`#${id}`} data-nav={id}>{label}</a>)}
+      </nav>
+      <button class="mini" type="button" data-chart-open aria-label="Open the system chart">
+        <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+          <path id="mini-path" d="M6 18a12 12 0 1 0 24 0a12 12 0 1 0-24 0" />
+          <circle id="mini-dot" cx="18" cy="6" r="2" />
+        </svg>
+        <span>Chart</span>
+      </button>
+    </header>
+
+    <dialog id="chart" aria-label="System chart">
+      <svg id="chart-svg" aria-hidden="true"></svg>
+      <div class="chart-head">
+        <p class="chart-title">System chart</p>
+        <p class="chart-note">The orange line is the flight path this page follows. It ends where it starts.</p>
+        <button type="button" class="chart-close" data-chart-close>Close <kbd>esc</kbd></button>
       </div>
+      <ul id="chart-bodies">
+        <li data-body="origin"><a href="#top"><i></i><span class="tx"><b>Origin</b><small>Home, about</small></span></a></li>
+        <li data-body="burn"><a href="#research"><i></i><span class="tx"><b>Burn scar</b><small>Research</small></span></a></li>
+        {projects.map(p => (
+          <li data-body={p.id}><a href={`#${p.id}`}><i></i><span class="tx"><b>{p.name}</b><small>Projects</small></span></a></li>
+        ))}
+        {openSource.map(o => (
+          <li data-body={o.id}><a href={`#${o.id}`}><i></i><span class="tx"><b>Agent Governance</b><small>Open source</small></span></a></li>
+        ))}
+        <li data-body="rivedix"><a href="#experience"><i></i><span class="tx"><b>Rivedix</b><small>Experience</small></span></a></li>
+        <li data-body="well"><a href="#explorations"><i></i><span class="tx"><b>The well</b><small>Explorations</small></span></a></li>
+        <li data-uncharted tabindex="0"><span class="u-dot"></span><span class="u-text">Uncharted. Nothing here yet.</span></li>
+      </ul>
+    </dialog>
+  </Fragment>
+
+  <section id="top" class="stop hero" data-stop="top" data-section="top" tabindex="-1">
+    <h1 aria-label={site.name}>
+      <span class="ln"><span data-gl-text>Raunak</span></span>
+      <span class="ln"><span data-gl-text class="it">Bhagate</span></span>
+    </h1>
+    <p class="role">{site.description}</p>
+    <div class="cues">
+      <a class="cue" href="#about">Scroll to leave orbit</a>
+      <p id="mass-hint" class="cue-mass">You have mass. <span class="fine">Press and hold the dark.</span><span class="coarse">Touch and hold the dark.</span></p>
+    </div>
+  </section>
+
+  <div class="transit" aria-hidden="true"></div>
+
+  <section id="about" class="stop col left" data-stop="about" data-section="about" tabindex="-1">
+    <h2 class="display"><span data-gl-text>About</span></h2>
+    <p class="lede">{lede}</p>
+    {rest.map(p => <p>{p}</p>)}
+    <ul class="links">
+      {site.links.map(l => <li><a href={l.href}>{l.label}</a></li>)}
+    </ul>
+    <p class="fig">This is Origin, the world the trajectory leaves from and comes back to.</p>
+  </section>
+
+  <div class="transit" aria-hidden="true"><p class="line">“A result that only looks good at unlimited scale is not a result.”</p></div>
+
+  <section id="research" class="stop col left" data-stop="research" data-section="research" tabindex="-1">
+    <h2 class="display"><span data-gl-text>Research</span></h2>
+    <p class="lede">Three threads, and they keep meeting.</p>
+    <dl class="threads">
+      <div><dt>Inference</dt><dd>The serving stack: throughput, latency, and what it costs to run when the hardware budget is fixed.</dd></div>
+      <div><dt>Agentic systems</dt><dd>As infrastructure: what a model can see, what it is allowed to do, and how you check that it did the right thing.</dd></div>
+      <div><dt>Geospatial AI</dt><dd>Where labels are scarce and a convincing map is not a true one.</dd></div>
+    </dl>
+    <h3 class="sub">Publication</h3>
+    {publications.map(pub => <Publication pub={pub} />)}
+    <p class="fig">This world is built from that paper. Its parcels burn whole wherever a noise field crosses 0.60, the threshold the paper deploys, and the embers on each front stand in for VIIRS fire detections.</p>
+  </section>
+
+  <div class="transit" aria-hidden="true"><p class="line">“A convincing map is not a true one.”</p></div>
+
+  <div id="projects" class="group" data-section="projects" tabindex="-1">
+    <section class="stop col left" data-stop="projects">
+      <h2 class="display"><span data-gl-text>Projects</span></h2>
+      <p class="lede">Systems you can run and measure. Each one is a body in this system, and its shape comes from what it does.</p>
     </section>
 
-    <section class="block" id="news">
-      <h2>News</h2>
-      <ul class="news">
-        {news.map(n => (
+    {projects.map((p, i) => (
+      <>
+        <div class="transit short" aria-hidden="true"></div>
+        <article id={p.id} class={`stop col ${i % 2 ? 'left' : 'right'}`} data-stop={p.id} data-label={p.name} tabindex="-1">
+          <h3 class="title"><a href={p.href}>{p.name}</a></h3>
+          <p>{p.blurb}</p>
+          <ul class="tags">{p.tags.map(t => <li>{t}</li>)}</ul>
+          {captions[p.id] && <p class="fig">{captions[p.id]}</p>}
+        </article>
+      </>
+    ))}
+
+    {openSource.map(o => (
+      <>
+        <div class="transit short" aria-hidden="true"></div>
+        <article id={o.id} class="stop col right" data-stop={o.id} data-label="Agent Governance" tabindex="-1">
+          <p class="kicker">Open source</p>
+          <h3 class="title">{o.project}</h3>
+          <p>{o.blurb} <a href={o.href}>{o.status} (#{o.pr})</a>.</p>
+          <p class="fig">A small moon, merged into a much larger system.</p>
+        </article>
+      </>
+    ))}
+  </div>
+
+  <div class="transit" aria-hidden="true"><p class="line">“The bar is whether it still works after it leaves the notebook.”</p></div>
+
+  <section id="experience" class="stop col left" data-stop="experience" data-section="experience" tabindex="-1">
+    <h2 class="display"><span data-gl-text>Experience</span></h2>
+    {experience.map(e => (
+      <article class="entry">
+        <h3 class="title">{e.role}, {e.org}</h3>
+        <p class="meta">{e.when}</p>
+        <p>{e.blurb}</p>
+      </article>
+    ))}
+    <article class="entry">
+      <h3 class="title">First author, oral presentation, ACRS 2026</h3>
+      <p class="meta">Asian Conference on Remote Sensing</p>
+      <p>{paper.title}.</p>
+    </article>
+    <h3 class="sub">Log</h3>
+    <ul class="log">
+      {news.map(n => (
+        <li>
+          <span class="when">{n.date}</span>
+          <span>{n.href ? <a href={n.href}>{n.text}</a> : n.text}</span>
+        </li>
+      ))}
+    </ul>
+    <p class="fig">A tidally locked world, with one hard line between day and night. Evaluation work draws the same kind of line.</p>
+  </section>
+
+  <div class="transit long" aria-hidden="true"><p class="line">“Limits, cost, and proof.”</p></div>
+
+  <section id="explorations" class="stop col left" data-stop="explorations" data-section="explorations" tabindex="-1">
+    <h2 class="display"><span data-gl-text>Explorations</span></h2>
+    <p class="lede">Writing and experiments, out where the light bends.</p>
+    <h3 class="sub">Writing</h3>
+    {posts.length > 0 ? (
+      <ul class="postlist">
+        {posts.map(p => (
           <li>
-            <span class="when">{n.date}</span>
-            <span>{n.href ? <a href={n.href}>{n.text}</a> : n.text}</span>
+            <a href={`/blog/${p.id}/`}>{p.data.title}</a>
+            <time datetime={p.data.date.toISOString()}>{formatDate(p.data.date)}</time>
           </li>
         ))}
       </ul>
-    </section>
-
-    <section class="block" id="publications">
-      <h2>Publications</h2>
-      {publications.map(pub => <Publication pub={pub} />)}
-    </section>
-
-    <section class="block" id="projects">
-      <h2>Projects</h2>
-      {projects.map(p => (
-        <article class="entry">
-          <h3><a href={p.href}>{p.name}</a></h3>
-          <p>{p.blurb}</p>
-          <div class="tags">{p.tags.map(t => <span>{t}</span>)}</div>
-        </article>
-      ))}
-    </section>
-
-    <section class="block" id="experience">
-      <h2>Experience</h2>
-      {experience.map(e => (
-        <article class="entry">
-          <h3>{e.role}, {e.org}</h3>
-          <p class="meta">{e.when}</p>
-          <p>{e.blurb}</p>
-        </article>
-      ))}
-    </section>
-
-    <section class="block" id="open-source">
-      <h2>Open source</h2>
-      {openSource.map(o => (
-        <article class="entry">
-          <h3>{o.project}</h3>
-          <p>{o.blurb} <a href={o.href}>{o.status} (#{o.pr})</a>.</p>
-        </article>
-      ))}
-    </section>
-
-    {posts.length > 0 && (
-      <section class="block" id="writing">
-        <h2>Writing</h2>
-        <ul class="postlist">
-          {posts.map(p => (
-            <li>
-              <span>
-                <a href={`/blog/${p.id}/`}>{p.data.title}</a>
-                {p.data.draft && <span class="draft-badge">draft</span>}
-              </span>
-              <time datetime={p.data.date.toISOString()}>{formatDate(p.data.date)}</time>
-            </li>
-          ))}
-        </ul>
-      </section>
+    ) : (
+      <p>Nothing has escaped yet. When it does, it lands in <a href="/blog/">Writing</a> and the <a href="/rss.xml">RSS feed</a>.</p>
     )}
-  </div>
+    <h3 class="sub">Experiment: a loss is a well</h3>
+    <p>Training a model and falling into a gravity well are the same picture: a ball following a slope downhill. Push the learning rate until it stops converging and escapes.</p>
+    <GradientDescent caption="Gradient descent on a double-well loss. Move the sliders, then run." />
+    <p class="fig">A Schwarzschild black hole, its rays integrated one by one. The light from the far side of the disk bends over the top of it. Your cursor is a smaller version of the same deflection.</p>
+  </section>
+
+  <div class="transit long" aria-hidden="true"><p class="line">“I care whether the system stays fast and stays reliable once it is actually serving.”</p></div>
+
+  <section id="contact" class="stop end" data-stop="contact" data-section="contact" tabindex="-1">
+    <div class="end-inner">
+      <h2 class="display"><span data-gl-text>Contact</span></h2>
+      <p class="lede">The trajectory closes here. Say hello.</p>
+      <ul class="signal">
+        {contacts.map(l => (
+          <li><a href={l.href}><span class="net">{l.label}</span><span class="hd">{handles[l.label] ?? ''}</span></a></li>
+        ))}
+      </ul>
+      <p class="again"><a href="#top">Go round again</a></p>
+    </div>
+    <footer class="foot">
+      <span>© {new Date().getFullYear()} {site.name}</span>
+      <span><a href="/rss.xml">RSS</a> · <a href={site.repo}>Source</a> · <kbd>/</kbd> search · <kbd>M</kbd> chart · hold <kbd>G</kbd> for mass</span>
+    </footer>
+  </section>
+
+  <noscript>
+    <style>.still { opacity: 1 !important; }</style>
+  </noscript>
+
+  <script>
+    import('../universe/boot');
+  </script>
 </Base>

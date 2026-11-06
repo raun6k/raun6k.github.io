@@ -12,7 +12,7 @@ const { items } = Astro.props;
 const json = JSON.stringify(items).replace(/</g, '\\u003c');
 ---
 <dialog id="palette" aria-label="Command palette">
-  <input id="palette-input" type="text" placeholder="Search papers, projects, posts, actions…" autocomplete="off" spellcheck="false" aria-controls="palette-list" />
+  <input id="palette-input" type="text" placeholder="Set a course…" autocomplete="off" spellcheck="false" aria-controls="palette-list" />
   <ul id="palette-list" role="listbox"></ul>
   <div class="foot"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span></div>
 </dialog>
@@ -81,8 +81,10 @@ const json = JSON.stringify(items).replace(/</g, '\\u003c');
     const toast = (msg: string) => document.dispatchEvent(new CustomEvent('toast', { detail: msg }));
     const run = (it: Item) => {
       dlg.close();
-      if (it.action === 'theme') document.dispatchEvent(new CustomEvent('toggle-theme'));
-      else if (it.action === 'background') document.dispatchEvent(new CustomEvent('toggle-bg'));
+      if (it.action === 'chart') {
+        if (document.getElementById('chart')) document.dispatchEvent(new CustomEvent('open-chart'));
+        else location.href = '/#top';
+      }
       else if (it.action === 'copy-link') navigator.clipboard.writeText(location.href).then(() => toast('Link copied'));
       else if (it.action === 'copy-text' && it.text) navigator.clipboard.writeText(it.text).then(() => toast('BibTeX copied'));
       else if (it.href) {

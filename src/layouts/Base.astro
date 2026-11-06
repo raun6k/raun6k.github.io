@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import Background from '../components/Background.astro';
 import Palette, { type PaletteItem } from '../components/Palette.astro';
 import { site } from '../data/site';
 import { publications } from '../data/publications';
@@ -11,18 +10,24 @@ interface Props {
   title?: string;
   description?: string;
   type?: 'website' | 'article';
+  /** Article and utility pages get the quiet shell; the home page draws its own. */
+  shell?: boolean;
 }
-const { title, description = site.description, type = 'website' } = Astro.props;
+const { title, description = site.description, type = 'website', shell = true } = Astro.props;
 const pageTitle = title ? `${title} · ${site.name}` : site.name;
 const canonical = new URL(Astro.url.pathname, site.url).href;
+const ogImage = new URL('/universe/og.jpg', site.url).href;
 
 const posts = await getPosts();
 const items: PaletteItem[] = [
-  { label: 'Home', hint: 'page', href: '/' },
-  { label: 'Publications', hint: 'section', href: '/#publications' },
-  { label: 'Projects', hint: 'section', href: '/#projects' },
-  { label: 'Experience', hint: 'section', href: '/#experience' },
-  { label: 'Open source', hint: 'section', href: '/#open-source' },
+  { label: 'Origin', hint: 'set course', href: '/#top' },
+  { label: 'About', hint: 'set course', href: '/#about' },
+  { label: 'Research', hint: 'set course', href: '/#research' },
+  { label: 'Projects', hint: 'set course', href: '/#projects' },
+  { label: 'Experience', hint: 'set course', href: '/#experience' },
+  { label: 'Explorations', hint: 'set course', href: '/#explorations' },
+  { label: 'Contact', hint: 'set course', href: '/#contact' },
+  { label: 'Open the system chart', hint: 'action', action: 'chart' },
   { label: 'Writing', hint: 'page', href: '/blog/' },
   ...publications.map(p => ({ label: p.title, hint: 'paper', href: p.links[0]?.href, external: true })),
   ...publications.map(p => ({ label: `Copy BibTeX: ${p.title}`, hint: 'action', action: 'copy-text', text: p.bibtex })),
@@ -30,91 +35,73 @@ const items: PaletteItem[] = [
   ...posts.map(p => ({ label: p.data.title, hint: 'post', href: `/blog/${p.id}/` })),
   ...site.links.map(l => ({ label: l.label, hint: 'link', href: l.href, external: true })),
   { label: 'RSS feed', hint: 'link', href: '/rss.xml' },
-  { label: 'Toggle light / dark', hint: 'action', action: 'theme' },
-  { label: 'Toggle background', hint: 'action', action: 'background' },
   { label: 'Copy link to this page', hint: 'action', action: 'copy-link' },
 ];
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  url: site.url,
+  description: site.description,
+  sameAs: site.links.filter(l => !l.label.includes('arXiv')).map(l => l.href),
+};
 ---
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#030406" />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title={site.name} href="/rss.xml" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={type} />
     <meta property="og:url" content={canonical} />
-    <meta name="color-scheme" content="light dark" />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
     <title>{pageTitle}</title>
-    <script is:inline>
-      try {
-        var t = localStorage.getItem('theme');
-        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
-      } catch (e) {}
-    </script>
+    <script is:inline>document.documentElement.classList.add('js')</script>
+    <script type="application/ld+json" set:html={JSON.stringify(person)}></script>
+    <slot name="head" />
   </head>
-  <body>
-    <Background />
-    <div class="wrap">
-      <header class="site-header">
+  <body class={shell ? 'shell' : ''}>
+    {shell && (
+      <div class="shell-sky" aria-hidden="true"></div>
+      <header class="bar">
         <a class="brand" href="/">{site.name}</a>
         <nav aria-label="Main">
-          <a href="/#publications">Research</a>
+          <a href="/#about">About</a>
+          <a href="/#research">Research</a>
+          <a href="/#projects">Projects</a>
           <a href="/blog/">Writing</a>
-          <button class="searchbtn" id="palette-open" type="button" aria-label="Open command palette">
-            <svg class="searchicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
-            <span class="label">Search</span> <kbd id="palette-kbd">Ctrl K</kbd>
-          </button>
-          <button class="iconbtn" id="theme-toggle" type="button" aria-label="Toggle light or dark theme">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17Z" fill="currentColor" stroke="none"/></svg>
-          </button>
+          <a href="/#contact">Contact</a>
         </nav>
       </header>
-    </div>
-    <main><slot /></main>
-    <div class="wrap">
-      <footer class="site-footer">
+    )}
+    <slot name="chrome" />
+    <main id="main"><slot /></main>
+    {shell && (
+      <footer class="foot">
         <span>© {new Date().getFullYear()} {site.name}</span>
-        <span><a href="/rss.xml">RSS</a> · <a href={site.repo}>Source</a> · Press <kbd>/</kbd> to search</span>
+        <span><a href="/rss.xml">RSS</a> · <a href={site.repo}>Source</a> · <kbd>/</kbd> to search</span>
       </footer>
-    </div>
+    )}
     <Palette items={items} />
     <div id="toast" role="status" aria-live="polite"></div>
 
     <script>
-      const root = document.documentElement;
       const toastEl = document.getElementById('toast')!;
       let toastTimer: number | undefined;
       document.addEventListener('toast', e => {
         toastEl.textContent = (e as CustomEvent<string>).detail;
         toastEl.classList.add('show');
         clearTimeout(toastTimer);
-        toastTimer = window.setTimeout(() => toastEl.classList.remove('show'), 1800);
+        toastTimer = window.setTimeout(() => toastEl.classList.remove('show'), 2200);
       });
-
-      // Theme: follows the system until the visitor picks one.
-      const currentTheme = () =>
-        root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      const toggleTheme = () => {
-        const next = currentTheme() === 'dark' ? 'light' : 'dark';
-        root.dataset.theme = next;
-        try { localStorage.setItem('theme', next); } catch {}
-        document.dispatchEvent(new CustomEvent('themechange'));
-      };
-      document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
-      document.addEventListener('toggle-theme', toggleTheme);
-
-      // Palette trigger and platform-aware shortcut hint.
-      const mac = /Mac|iPhone|iPad/.test(navigator.platform);
-      const kbd = document.getElementById('palette-kbd');
-      if (kbd) kbd.textContent = mac ? '⌘K' : 'Ctrl K';
-      document.getElementById('palette-open')?.addEventListener('click', () =>
-        document.dispatchEvent(new CustomEvent('open-palette')));
 
       // Copy buttons: <button data-copy="text">.
       document.addEventListener('click', e => {
@@ -127,7 +114,7 @@ const items: PaletteItem[] = [
         });
       });
 
-      // Easter egg: ↑ ↑ ↓ ↓ ← → ← → b a releases a burst of gradient-descent balls.
+      // ↑ ↑ ↓ ↓ ← → ← → b a: four gravitational waves, and one honest loss value.
       const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
       let pos = 0;
       document.addEventListener('keydown', e => {
