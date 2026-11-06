@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts', p => !p.data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+<Base>
+  <h1>Raunak Bhagate</h1>
+  <p>Walking skeleton placeholder. Real content comes after the pipeline is verified.</p>
+  <h2>Writing</h2>
+  <ul>
+    {posts.map(p => <li><a href={`/blog/${p.id}/`}>{p.data.title}</a></li>)}
+  </ul>
+</Base>
